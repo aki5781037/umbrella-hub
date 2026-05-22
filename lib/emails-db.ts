@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
-import { customers, mails as seedMails, projects } from './data';
+import { getCustomers, getProjects, mails as seedMails } from './data';
 
 // 定义邮件数据类型
 export type MailItem = {
@@ -153,6 +153,8 @@ export function associateMail(mail: Partial<MailItem>): MailItem {
     return matchedMail;
   }
 
+  const customers = getCustomers();
+  const projects = getProjects();
   let matchedCust: (typeof customers)[number] | undefined = undefined;
 
   // 算法1：直接通过发件人邮箱匹配客户联系人列表中的 primary 或其他联系人邮箱

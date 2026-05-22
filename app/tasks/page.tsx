@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Shell } from '@/components/Shell';
-import { allTasks, taskSummary } from '@/lib/data';
+import { getAllTasks, getTaskSummary } from '@/lib/data';
 import { getPortalSubmissionAlerts } from '@/lib/portal-submissions';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,8 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function TasksPage() {
+  const allTasks = getAllTasks();
+  const taskSummary = getTaskSummary();
   const activeTasks = allTasks.filter((task) => task.status !== '已完成');
   const completedTasks = allTasks.filter((task) => task.status === '已完成');
   const portalSubmissionAlerts = getPortalSubmissionAlerts();

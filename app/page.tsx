@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Shell } from '@/components/Shell';
-import { allTasks, metrics, projects } from '@/lib/data';
+import { getAllTasks, getMetrics, getProjects } from '@/lib/data';
 import { getPortalSubmissionAlerts } from '@/lib/portal-submissions';
 import { readMails } from '@/lib/emails-db';
 
@@ -9,6 +9,9 @@ export const dynamic = 'force-dynamic';
 export default function DashboardPage() {
   const portalSubmissionAlerts = getPortalSubmissionAlerts();
   const mails = readMails();
+  const allTasks = getAllTasks();
+  const metrics = getMetrics();
+  const projects = getProjects();
 
   // 动态更新“未读邮件”的卡片数据
   const unreadMailsCount = mails.filter((mail) => mail.status === '未读').length;
@@ -59,7 +62,7 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-3">
             {mails.slice(0, 4).map((mail) => (
-              <Link key={mail.id} href={`/mail/${mail.id}`} className="block rounded-xl border border-line p-4 hover:bg-soft">
+              <Link key={mail.id} href={`/mail/${encodeURIComponent(mail.id)}`} className="block rounded-xl border border-line p-4 hover:bg-soft">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="font-semibold text-ink">{mail.subject}</p>

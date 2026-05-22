@@ -66,7 +66,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                 {projectMails.map((mail) => (
                   <Link
                     key={mail.id}
-                    href={`/mail/${mail.id}`}
+                    href={`/mail/${encodeURIComponent(mail.id)}`}
                     className="group block rounded-xl border border-blue-100 bg-blue-50/50 p-3 text-sm transition hover:bg-blue-50"
                   >
                     <div className="flex items-center justify-between">

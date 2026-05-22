@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
-import { projects } from '@/lib/data';
+import { getProjectById, getProjects, projects } from '@/lib/data';
 
 type PortalSubmission = {
   id: string;
@@ -118,7 +118,7 @@ export function getPortalSubmissionAlerts(includeHandled = false) {
   return readSubmissions()
     .filter((submission) => includeHandled || !submission.handledAt)
     .map((submission) => {
-      const project = projects.find((item) => item.id === submission.projectId);
+      const project = getProjectById(submission.projectId);
 
       if (!project) {
         return undefined;
@@ -144,10 +144,10 @@ export function getPortalSubmissionAlerts(includeHandled = false) {
 }
 
 export function getProjectWithPortalSubmissions(projectId: string) {
-  const project = projects.find((item) => item.id === projectId);
+  const project = getProjectById(projectId);
   return project ? applyPortalSubmissions(project) : undefined;
 }
 
 export function getPortalProjectsWithSubmissions() {
-  return projects.filter((project) => project.portalVisible).map((project) => applyPortalSubmissions(project));
+  return getProjects().filter((project) => project.portalVisible).map((project) => applyPortalSubmissions(project));
 }

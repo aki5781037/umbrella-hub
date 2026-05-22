@@ -3,6 +3,7 @@ import Link from 'next/link';
 const navItems = [
   { href: '/', label: '驾驶舱' },
   { href: '/mail', label: '邮件中心' },
+  { href: '/umbrella-catalog', label: '伞款图库' },
   { href: '/customers', label: '客户管理' },
   { href: '/projects', label: '项目管理' },
   { href: '/tasks', label: '任务提醒' },

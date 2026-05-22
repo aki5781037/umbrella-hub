@@ -1,3 +1,6 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+
 export const mails = [
   {
     id: 'abc-quotation-confirm',
@@ -228,16 +231,229 @@ export const metrics = [
 
 export const portalProjects = projects.filter((project) => project.portalVisible);
 
+type Customer = (typeof customers)[number];
+type Project = (typeof projects)[number];
+
+type CrmRecords = {
+  customers: Customer[];
+  projects: Project[];
+};
+
+const crmRecordsPath = join(process.cwd(), 'data', 'crm-records.json');
+
+function ensureCrmRecordsDir() {
+  mkdirSync(join(process.cwd(), 'data'), { recursive: true });
+}
+
+function readCrmRecords(): CrmRecords {
+  ensureCrmRecordsDir();
+
+  if (!existsSync(crmRecordsPath)) {
+    return { customers: [], projects: [] };
+  }
+
+  try {
+    return JSON.parse(readFileSync(crmRecordsPath, 'utf8')) as CrmRecords;
+  } catch {
+    return { customers: [], projects: [] };
+  }
+}
+
+function writeCrmRecords(records: CrmRecords) {
+  ensureCrmRecordsDir();
+  writeFileSync(crmRecordsPath, JSON.stringify(records, null, 2), 'utf8');
+}
+
+function slugify(value: string) {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return slug || `item-${Date.now()}`;
+}
+
+export function getCustomers() {
+  return [...customers, ...readCrmRecords().customers];
+}
+
+export function getProjects() {
+  return [...projects, ...readCrmRecords().projects];
+}
+
+export function getAllTasks() {
+  return getProjects().flatMap((project) =>
+    project.tasks.map((task, index) => ({
+      id: `${project.id}-${index}`,
+      projectId: project.id,
+      projectName: project.name,
+      customer: project.customer,
+      projectStage: project.stage,
+      priority: project.priority,
+      risk: project.risk,
+      title: task.title,
+      status: task.status,
+      owner: task.owner,
+      due: task.due
+    }))
+  );
+}
+
+export function getTaskSummary() {
+  const tasks = getAllTasks();
+
+  return {
+    total: tasks.length,
+    active: tasks.filter((task) => task.status !== '已完成').length,
+    overdue: tasks.filter((task) => task.status === '逾期' || (task.status !== '已完成' && task.due < today)).length,
+    today: tasks.filter((task) => task.status !== '已完成' && task.due <= today).length
+  };
+}
+
+export function getMetrics() {
+  return [
+    { label: '今日待跟进', value: String(getTaskSummary().today), tone: 'text-blue-700', bg: 'bg-blue-50' },
+    { label: '未读邮件', value: String(mails.filter((mail) => mail.status === '未读').length), tone: 'text-amber-700', bg: 'bg-amber-50' },
+    { label: '进行中项目', value: String(getProjects().length), tone: 'text-emerald-700', bg: 'bg-emerald-50' },
+    { label: '逾期事项', value: String(getTaskSummary().overdue), tone: 'text-rose-700', bg: 'bg-rose-50' }
+  ];
+}
+
+export function addCustomer(input: {
+  name: string;
+  legalName?: string;
+  country: string;
+  type?: string;
+  level?: string;
+  source?: string;
+  owner: string;
+  status?: string;
+  next?: string;
+  contactName?: string;
+  contactTitle?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  preference?: string;
+}) {
+  const records = readCrmRecords();
+  const idBase = slugify(input.name);
+  const existingIds = new Set(getCustomers().map((customer) => customer.id));
+  let id = idBase;
+  let index = 2;
+
+  while (existingIds.has(id)) {
+    id = `${idBase}-${index}`;
+    index++;
+  }
+
+  const customer: Customer = {
+    id,
+    name: input.name,
+    legalName: input.legalName || input.name,
+    country: input.country,
+    type: input.type || '潜在客户',
+    level: input.level || 'B',
+    source: input.source || '手动新增',
+    owner: input.owner,
+    status: input.status || '新线索',
+    lastContact: new Date().toISOString().slice(0, 10),
+    next: input.next || new Date().toISOString().slice(0, 10),
+    preference: input.preference || '待补充客户偏好。',
+    contacts: [
+      {
+        name: input.contactName || '待补充联系人',
+        title: input.contactTitle || '联系人',
+        email: input.contactEmail || '',
+        phone: input.contactPhone || '',
+        primary: true
+      }
+    ],
+    activities: [`${new Date().toISOString().slice(0, 10)} 手动新建客户档案`]
+  };
+
+  records.customers.push(customer);
+  writeCrmRecords(records);
+  return customer;
+}
+
+export function addProject(input: {
+  customerId: string;
+  name: string;
+  type?: string;
+  stage?: string;
+  owner: string;
+  collaborators?: string;
+  amount?: string;
+  risk?: string;
+  priority?: string;
+  due?: string;
+  nextAction?: string;
+  nextFollow?: string;
+}) {
+  const customer = getCustomerById(input.customerId);
+
+  if (!customer) {
+    return undefined;
+  }
+
+  const records = readCrmRecords();
+  const idBase = slugify(input.name);
+  const existingIds = new Set(getProjects().map((project) => project.id));
+  let id = idBase;
+  let index = 2;
+
+  while (existingIds.has(id)) {
+    id = `${idBase}-${index}`;
+    index++;
+  }
+
+  const project: Project = {
+    id,
+    customerId: customer.id,
+    name: input.name,
+    customer: customer.name,
+    type: input.type || '新客户开发',
+    stage: input.stage || '新线索',
+    owner: input.owner,
+    collaborators: input.collaborators ? input.collaborators.split(/[,，、]/).map((item) => item.trim()).filter(Boolean) : [],
+    amount: input.amount || '待评估',
+    risk: input.risk || '绿灯',
+    priority: input.priority || '中',
+    start: new Date().toISOString().slice(0, 10),
+    due: input.due || new Date().toISOString().slice(0, 10),
+    nextAction: input.nextAction || '补充客户需求并建立下一步跟进计划',
+    nextFollow: input.nextFollow || new Date().toISOString().slice(0, 10),
+    portalVisible: true,
+    timeline: [`${new Date().toISOString().slice(0, 10)} 手动新建项目`],
+    tasks: [
+      {
+        title: input.nextAction || '补充客户需求并建立下一步跟进计划',
+        status: '进行中',
+        owner: input.owner,
+        due: input.nextFollow || input.due || new Date().toISOString().slice(0, 10)
+      }
+    ],
+    files: [],
+    confirmations: [],
+    messages: []
+  };
+
+  records.projects.push(project);
+  writeCrmRecords(records);
+  return project;
+}
+
 export function getCustomerById(id: string) {
-  return customers.find((customer) => customer.id === id);
+  return getCustomers().find((customer) => customer.id === id);
 }
 
 export function getProjectById(id: string) {
-  return projects.find((project) => project.id === id);
+  return getProjects().find((project) => project.id === id);
 }
 
 export function getProjectsByCustomerId(customerId: string) {
-  return projects.filter((project) => project.customerId === customerId);
+  return getProjects().filter((project) => project.customerId === customerId);
 }
 
 export function getMailById(id: string) {

@@ -1,14 +1,21 @@
+import Link from 'next/link';
 import { Shell } from '@/components/Shell';
+import { getCustomers } from '@/lib/data';
 
-const customers = [
-  { name: 'ABC Malaysia', country: 'Malaysia', owner: 'Linda', status: '正在开发', next: '2026-05-23' },
-  { name: 'Korea Brand', country: 'Korea', owner: 'Cathy', status: '样品沟通', next: '2026-05-25' },
-  { name: 'Sunny Retail', country: 'UAE', owner: 'Tom', status: '返单跟进', next: '2026-05-22' }
-];
+export const dynamic = 'force-dynamic';
 
 export default function CustomersPage() {
+  const customers = getCustomers();
+
   return (
     <Shell active="客户管理">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-2xl font-bold text-ink">客户管理</h3>
+          <p className="mt-1 text-sm text-muted">管理客户档案、联系人和跟进计划。</p>
+        </div>
+        <Link href="/customers/new" className="w-fit rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white">新建客户</Link>
+      </div>
       <div className="grid gap-4 lg:grid-cols-3">
         {customers.map((customer) => (
           <article key={customer.name} className="rounded-2xl border border-line bg-white p-6 shadow-panel">
@@ -22,7 +29,7 @@ export default function CustomersPage() {
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between gap-3"><dt className="text-muted">负责人</dt><dd className="font-medium">{customer.owner}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-muted">下次跟进</dt><dd className="font-medium">{customer.next}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-muted">可操作</dt><dd className="font-medium text-brand">创建项目 / 发邮件</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted">可操作</dt><dd className="font-medium text-brand"><Link href={`/customers/${customer.id}`}>查看详情</Link></dd></div>
             </dl>
           </article>
         ))}
