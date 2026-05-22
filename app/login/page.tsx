@@ -1,56 +1,4 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-
-const accounts = {
-  admin: {
-    email: process.env.ADMIN_EMAIL ?? 'admin@arkumbrella.com',
-    password: process.env.ADMIN_PASSWORD ?? 'Umbrella2026!',
-    role: 'admin',
-    label: '内部管理账号'
-  },
-  customer: {
-    email: process.env.PORTAL_EMAIL ?? 'customer@example.com',
-    password: process.env.PORTAL_PASSWORD ?? 'Portal2026!',
-    role: 'customer',
-    label: '客户门户账号'
-  }
-};
-
-function normalizeNextPath(value: FormDataEntryValue | string | null | undefined) {
-  const nextPath = typeof value === 'string' && value.startsWith('/') ? value : '/';
-  return nextPath.startsWith('/login') ? '/' : nextPath;
-}
-
-async function login(formData: FormData) {
-  'use server';
-
-  const email = String(formData.get('email') ?? '').trim().toLowerCase();
-  const password = String(formData.get('password') ?? '');
-  const nextPath = normalizeNextPath(formData.get('next'));
-  const matchedAccount = Object.values(accounts).find((account) => account.email.toLowerCase() === email && account.password === password);
-
-  if (!matchedAccount) {
-    redirect(`/login?error=invalid&next=${encodeURIComponent(nextPath)}`);
-  }
-
-  cookies().set('umbrella_session', matchedAccount.role, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 60 * 60 * 8
-  });
-
-  cookies().set('umbrella_identity', matchedAccount.email, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 60 * 60 * 8
-  });
-
-  redirect(matchedAccount.role === 'customer' ? '/portal' : nextPath);
-}
+import { accounts, normalizeNextPath } from '@/lib/auth';
 
 export default function LoginPage({ searchParams }: { searchParams?: { error?: string; next?: string } }) {
   const nextPath = normalizeNextPath(searchParams?.next);
@@ -69,7 +17,7 @@ export default function LoginPage({ searchParams }: { searchParams?: { error?: s
             <p>{accounts.customer.label}：{accounts.customer.email} / {accounts.customer.password}</p>
           </div>
         </div>
-        <form action={login} className="space-y-5 p-8 text-ink md:p-10">
+        <form action="/api/login" method="post" className="space-y-5 p-8 text-ink md:p-10">
           <div>
             <p className="text-sm text-muted">Umbrella Trade Hub</p>
             <h2 className="mt-1 text-2xl font-bold">账号登录</h2>
