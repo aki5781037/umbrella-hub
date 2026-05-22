@@ -1,0 +1,18 @@
+services:
+  umbrella-trade-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: umbrella-trade-hub
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      PORTAL_SUBMISSIONS_PATH: /app/data/portal-submissions.json
+    volumes:
+      - umbrella_trade_hub_data:/app/data
+
+volumes:
+  umbrella_trade_hub_data:
