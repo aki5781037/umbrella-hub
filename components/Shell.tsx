@@ -35,7 +35,7 @@ export function Shell({ children, active }: { children: React.ReactNode; active:
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">MVP 运行中</div>
-              <Link href="/logout" className="rounded-full border border-line px-4 py-2 text-sm font-medium text-muted hover:bg-soft hover:text-ink">退出</Link>
+              <a href="/logout" className="rounded-full border border-line px-4 py-2 text-sm font-medium text-muted hover:bg-soft hover:text-ink">退出</a>
             </div>
           </div>
           <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
