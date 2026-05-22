@@ -5,7 +5,8 @@ import { getCustomerById, getProjectById } from '@/lib/data';
 import { readMails } from '@/lib/emails-db';
 
 export default function MailDetailPage({ params }: { params: { id: string } }) {
-  const mail = readMails().find((m) => m.id === params.id);
+  const mailId = decodeURIComponent(params.id);
+  const mail = readMails().find((m) => m.id === params.id || m.id === mailId);
 
   if (!mail) {
     notFound();

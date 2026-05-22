@@ -244,7 +244,7 @@ export default function MailPage() {
                       )}
                     </td>
                     <td className="px-5 py-4 font-semibold text-ink">
-                      <Link href={`/mail/${mail.id}`} className="hover:text-brand transition-colors">
+                      <Link href={`/mail/${encodeURIComponent(mail.id)}`} className="hover:text-brand transition-colors">
                         {mail.subject}
                       </Link>
                       {mail.projectId && (
@@ -265,7 +265,7 @@ export default function MailPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <Link href={`/mail/${mail.id}`} className="font-semibold text-brand hover:text-brand-dark transition-colors">
+                      <Link href={`/mail/${encodeURIComponent(mail.id)}`} className="font-semibold text-brand hover:text-brand-dark transition-colors">
                         查看详情
                       </Link>
                     </td>
