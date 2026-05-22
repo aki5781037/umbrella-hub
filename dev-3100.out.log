@@ -27,19 +27,3 @@
  POST /api/customers 303 in 126ms
  GET /customers/s 200 in 74ms
  GET /customers/new 200 in 40ms
- ✓ Compiled in 589ms (537 modules)
- ✓ Compiled in 355ms (537 modules)
- ✓ Compiled in 139ms (254 modules)
- ✓ Compiled in 197ms (537 modules)
- ✓ Compiled /_not-found in 293ms (526 modules)
- GET /_next/static/css/app/layout.css?v=1779437058932 404 in 363ms
- GET /_next/static/css/app/layout.css?v=1779437059329 404 in 47ms
- ✓ Compiled in 112ms (256 modules)
- GET /_next/static/css/app/layout.css?v=1779437067447 404 in 64ms
- ✓ Compiled in 164ms (254 modules)
- ✓ Compiled /_not-found in 139ms (526 modules)
- ○ Compiling /_error ...
- ✓ Compiled /_error in 904ms (752 modules)
- GET /customers 404 in 7ms
- ✓ Compiled in 145ms (442 modules)
- GET /customers 404 in 10ms

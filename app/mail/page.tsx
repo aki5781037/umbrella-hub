@@ -152,20 +152,6 @@ export default function MailPage() {
     }
   };
 
-  const handleSystemReset = () => {
-    showToast('success', '正在执行系统净化并重置浏览器缓存...');
-    // 清理 cookie
-    document.cookie = "umbrella_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "umbrella_identity=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    // 清理 localStorage 与 sessionStorage
-    localStorage.clear();
-    sessionStorage.clear();
-    // 延迟 1.2 秒后强行刷新并拉回根路径
-    setTimeout(() => {
-      window.location.replace('/');
-    }, 1200);
-  };
-
   const showToast = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => {
@@ -223,14 +209,6 @@ export default function MailPage() {
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
               ) : null}
               模拟拉取 🚀
-            </button>
-
-            {/* 自动重置净化按钮 */}
-            <button
-              onClick={handleSystemReset}
-              className="rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 py-2.5 text-sm font-semibold text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50 hover:text-rose-300 transition-all"
-            >
-              重置缓存与会话并强制回首页 🔄
             </button>
           </div>
         </div>

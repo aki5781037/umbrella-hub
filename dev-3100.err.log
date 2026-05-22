@@ -2,38 +2,3 @@
 Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
-Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'E:\System Volume Information'
-Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'E:\pagefile.sys'
-Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'E:\pagefile.sys'
-Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'E:\System Volume Information'
-<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'E:\外贸业务驾驶舱\.next\server\vendor-chunks'
-<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@swc' in E:\外贸业务驾驶舱\.next\server for build dependencies doesn't lead to expected result 'E:\外贸业务驾驶舱\.next\server\vendor-chunks\@swc.js', but to 'Error: Can't resolve './vendor-chunks/@swc' in 'E:\外贸业务驾驶舱\.next\server'' instead. Resolving dependencies are ignored for this path.
-<w>  at resolve commonjs file ./vendor-chunks/@swc (expected E:\外贸业务驾驶舱\.next\server\vendor-chunks\@swc.js)
-<w>  at file dependencies E:\外贸业务驾驶舱\.next\server\webpack-runtime.js
-<w>  at file E:\外贸业务驾驶舱\.next\server\webpack-runtime.js
-<w>  at file dependencies E:\外贸业务驾驶舱\.next\server\pages\_error.js
-<w>  at file E:\外贸业务驾驶舱\.next\server\pages\_error.js
-<w>  at file dependencies E:\外贸业务驾驶舱\node_modules\next\dist\server\require.js
-<w>  at file E:\外贸业务驾驶舱\node_modules\next\dist\server\require.js
-<w>  at file dependencies E:\外贸业务驾驶舱\node_modules\next\dist\server\load-components.js
-<w>  at file E:\外贸业务驾驶舱\node_modules\next\dist\server\load-components.js
-<w>  at file dependencies E:\外贸业务驾驶舱\node_modules\next\dist\build\utils.js
-<w>  at file E:\外贸业务驾驶舱\node_modules\next\dist\build\utils.js
-<w>  at file dependencies E:\外贸业务驾驶舱\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w>  at file E:\外贸业务驾驶舱\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w>  at resolve commonjs E:\外贸业务驾驶舱\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/next' in E:\外贸业务驾驶舱\.next\server for build dependencies doesn't lead to expected result 'E:\外贸业务驾驶舱\.next\server\vendor-chunks\next.js', but to 'Error: Can't resolve './vendor-chunks/next' in 'E:\外贸业务驾驶舱\.next\server'' instead. Resolving dependencies are ignored for this path.
-<w>  at resolve commonjs file ./vendor-chunks/next (expected E:\外贸业务驾驶舱\.next\server\vendor-chunks\next.js)
-<w>  at file dependencies E:\外贸业务驾驶舱\.next\server\webpack-runtime.js
-<w>  at file E:\外贸业务驾驶舱\.next\server\webpack-runtime.js
-<w>  at file dependencies E:\外贸业务驾驶舱\.next\server\pages\_error.js
-<w>  at file E:\外贸业务驾驶舱\.next\server\pages\_error.js
-<w>  at file dependencies E:\外贸业务驾驶舱\node_modules\next\dist\server\require.js
-<w>  at file E:\外贸业务驾驶舱\node_modules\next\dist\server\require.js
-<w>  at file dependencies E:\外贸业务驾驶舱\node_modules\next\dist\server\load-components.js
-<w>  at file E:\外贸业务驾驶舱\node_modules\next\dist\server\load-components.js
-<w>  at file dependencies E:\外贸业务驾驶舱\node_modules\next\dist\build\utils.js
-<w>  at file E:\外贸业务驾驶舱\node_modules\next\dist\build\utils.js
-<w>  at file dependencies E:\外贸业务驾驶舱\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w>  at file E:\外贸业务驾驶舱\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w>  at resolve commonjs E:\外贸业务驾驶舱\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
