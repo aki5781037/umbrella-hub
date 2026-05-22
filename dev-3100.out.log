@@ -1,0 +1,29 @@
+
+> umbrella-trade-dashboard@0.1.0 dev
+> next dev -H 0.0.0.0 -p 3000 -p 3100
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3100
+  - Network:      http://0.0.0.0:3100
+
+ ✓ Starting...
+ ✓ Ready in 2.4s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1559ms (526 modules)
+ GET /_next/static/webpack/9eb2cbc9d3572bd7.webpack.hot-update.json 404 in 1899ms
+ ○ Compiling /customers/[id] ...
+ ✓ Compiled /customers/[id] in 504ms (536 modules)
+ GET /customers/%E6%B3%95%E5%9B%BDs-2 200 in 513ms
+ GET /_next/static/webpack/9eb2cbc9d3572bd7.webpack.hot-update.json 404 in 49ms
+ GET /customers/%E6%B3%95%E5%9B%BDs-2 200 in 12ms
+ GET /customers/%E6%B3%95%E5%9B%BDs-2 200 in 237ms
+ ✓ Compiled /api/customers in 187ms (308 modules)
+ POST /api/customers 303 in 270ms
+ GET /customers/1779436708583 200 in 93ms
+ GET /customers/%E6%B3%95%E5%9B%BDs-2 200 in 51ms
+ ✓ Compiled /customers in 236ms (549 modules)
+ ✓ Compiled /customers/new in 120ms (523 modules)
+ ✓ Compiled /api/customers in 66ms (311 modules)
+ POST /api/customers 303 in 126ms
+ GET /customers/s 200 in 74ms
+ GET /customers/new 200 in 40ms

@@ -268,7 +268,7 @@ function slugify(value: string) {
   const slug = value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
   return slug || `item-${Date.now()}`;
@@ -444,12 +444,22 @@ export function addProject(input: {
   return project;
 }
 
+function normalizeRecordId(id: string) {
+  try {
+    return decodeURIComponent(id);
+  } catch {
+    return id;
+  }
+}
+
 export function getCustomerById(id: string) {
-  return getCustomers().find((customer) => customer.id === id);
+  const normalizedId = normalizeRecordId(id);
+  return getCustomers().find((customer) => customer.id === normalizedId);
 }
 
 export function getProjectById(id: string) {
-  return getProjects().find((project) => project.id === id);
+  const normalizedId = normalizeRecordId(id);
+  return getProjects().find((project) => project.id === normalizedId);
 }
 
 export function getProjectsByCustomerId(customerId: string) {

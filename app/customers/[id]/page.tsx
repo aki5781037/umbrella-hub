@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { Shell } from '@/components/Shell';
 import { getCustomerById, getProjectsByCustomerId } from '@/lib/data';
 
+export const dynamic = 'force-dynamic';
+
 export default function CustomerDetailPage({ params }: { params: { id: string } }) {
   const customer = getCustomerById(params.id);
 
