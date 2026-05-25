@@ -185,7 +185,8 @@ Invoke-Step -Title "Extract and rebuild Docker services" -Action {
     "YAML",
     "cd $RemoteRoot",
     "sudo docker compose --env-file .env.cloudflared build umbrella-trade-hub",
-    "sudo docker compose --env-file .env.cloudflared up -d umbrella-trade-hub cloudflared",
+    "sudo docker compose --env-file .env.cloudflared up -d umbrella-trade-hub",
+    "sudo docker start umbrella-trade-cloudflared >/dev/null 2>&1 || true",
     "sudo docker compose --env-file .env.cloudflared ps"
   ) -join "`n"
 
