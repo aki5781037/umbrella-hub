@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
-import { getProjectById, getProjects, projects } from '@/lib/data';
+import { getProjectById, getProjects } from '@/lib/data';
 
 type PortalSubmission = {
   id: string;
@@ -14,7 +14,7 @@ type PortalSubmission = {
   handledBy?: string;
 };
 
-type Project = (typeof projects)[number];
+type Project = ReturnType<typeof getProjects>[number];
 
 const storagePath = process.env.PORTAL_SUBMISSIONS_PATH ?? join(process.cwd(), 'data', 'portal-submissions.json');
 
@@ -148,6 +148,9 @@ export function getProjectWithPortalSubmissions(projectId: string) {
   return project ? applyPortalSubmissions(project) : undefined;
 }
 
-export function getPortalProjectsWithSubmissions() {
-  return getProjects().filter((project) => project.portalVisible).map((project) => applyPortalSubmissions(project));
+export function getPortalProjectsWithSubmissions(customerId?: string) {
+  return getProjects()
+    .filter((project) => project.portalVisible)
+    .filter((project) => !customerId || project.customerId === customerId)
+    .map((project) => applyPortalSubmissions(project));
 }

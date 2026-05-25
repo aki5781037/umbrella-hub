@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Shell } from '@/components/Shell';
 import { getCustomerById, getProjectsByCustomerId } from '@/lib/data';
+import { getProductionOrders } from '@/lib/production';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,12 +14,13 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
   }
 
   const customerProjects = getProjectsByCustomerId(customer.id);
+  const productionOrders = getProductionOrders(customer.id);
 
   return (
     <Shell active="客户管理">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Link href="/customers" className="text-sm font-medium text-brand">返回客户列表</Link>
+          <Link href="/customers" className="inline-flex min-h-8 items-center rounded-lg text-sm font-medium text-brand">返回客户列表</Link>
           <h3 className="mt-2 text-2xl font-bold text-ink">{customer.name}</h3>
           <p className="mt-1 text-sm text-muted">{customer.legalName} · {customer.country}</p>
         </div>
@@ -59,12 +61,12 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
         </div>
       </section>
 
-      <section className="mt-6 grid gap-4 xl:grid-cols-2">
+      <section className="mt-6 grid gap-4 xl:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-6 shadow-panel">
           <h4 className="text-lg font-bold text-ink">关联项目</h4>
           <div className="mt-5 space-y-3">
             {customerProjects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.id}`} className="block rounded-xl border border-line p-4 hover:bg-soft">
+              <Link key={project.id} href={`/projects?customer=${encodeURIComponent(project.customerId)}&project=${encodeURIComponent(project.id)}`} className="block rounded-xl border border-line p-4 hover:bg-soft">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="font-semibold text-ink">{project.name}</p>
                   <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700">{project.stage}</span>
@@ -72,6 +74,23 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                 <p className="mt-2 text-sm text-muted">负责人：{project.owner} · 计划完成：{project.due}</p>
               </Link>
             ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-white p-6 shadow-panel">
+          <h4 className="text-lg font-bold text-ink">生产订单</h4>
+          <div className="mt-5 space-y-3">
+            {productionOrders.map((order) => (
+              <Link key={order.id} href={`/production?customer=${encodeURIComponent(order.customerId)}&order=${encodeURIComponent(order.id)}`} className="block rounded-xl border border-line p-4 transition hover:bg-soft">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-semibold text-ink">{order.product}</p>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">{order.stage}</span>
+                </div>
+                <p className="mt-2 text-sm text-muted">{order.orderNo} · {order.quantity}</p>
+                <p className="mt-2 text-sm text-muted">预计出货：{order.shipDate}</p>
+              </Link>
+            ))}
+            {productionOrders.length === 0 ? <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">暂无生产订单。</div> : null}
           </div>
         </div>
 

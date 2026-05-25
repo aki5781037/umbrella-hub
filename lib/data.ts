@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { ensureBackupSchedulerStarted } from '@/lib/backup';
 
 export const mails = [
   {
@@ -232,11 +233,20 @@ export const metrics = [
 export const portalProjects = projects.filter((project) => project.portalVisible);
 
 type Customer = (typeof customers)[number];
-type Project = (typeof projects)[number];
+type ProjectAttachment = {
+  name: string;
+  storedName: string;
+  uploadedAt: string;
+};
+
+type Project = (typeof projects)[number] & {
+  attachmentFiles?: ProjectAttachment[];
+};
 
 type CrmRecords = {
   customers: Customer[];
   projects: Project[];
+  projectUpdates?: Record<string, Partial<Project>>;
 };
 
 const crmRecordsPath = join(process.cwd(), 'data', 'crm-records.json');
@@ -249,13 +259,18 @@ function readCrmRecords(): CrmRecords {
   ensureCrmRecordsDir();
 
   if (!existsSync(crmRecordsPath)) {
-    return { customers: [], projects: [] };
+    return { customers: [], projects: [], projectUpdates: {} };
   }
 
   try {
-    return JSON.parse(readFileSync(crmRecordsPath, 'utf8')) as CrmRecords;
+    const stored = JSON.parse(readFileSync(crmRecordsPath, 'utf8')) as Partial<CrmRecords>;
+    return {
+      customers: Array.isArray(stored.customers) ? stored.customers : [],
+      projects: Array.isArray(stored.projects) ? stored.projects : [],
+      projectUpdates: stored.projectUpdates && typeof stored.projectUpdates === 'object' ? stored.projectUpdates : {}
+    };
   } catch {
-    return { customers: [], projects: [] };
+    return { customers: [], projects: [], projectUpdates: {} };
   }
 }
 
@@ -275,11 +290,29 @@ function slugify(value: string) {
 }
 
 export function getCustomers() {
+  ensureBackupSchedulerStarted();
   return [...customers, ...readCrmRecords().customers];
 }
 
+function mergeProjectUpdate(project: Project, records: CrmRecords) {
+  const update = records.projectUpdates?.[project.id];
+  return update ? { ...project, ...update } : project;
+}
+
+function projectIsClosed(project: Project) {
+  return project.stage === '已结束';
+}
+
+function getAllProjects(options?: { includeClosed?: boolean }) {
+  const records = readCrmRecords();
+  const allProjects = [...projects, ...records.projects].map((project) => mergeProjectUpdate(project, records));
+
+  return options?.includeClosed ? allProjects : allProjects.filter((project) => !projectIsClosed(project));
+}
+
 export function getProjects() {
-  return [...projects, ...readCrmRecords().projects];
+  ensureBackupSchedulerStarted();
+  return getAllProjects();
 }
 
 export function getAllTasks() {
@@ -336,6 +369,7 @@ export function addCustomer(input: {
   contactPhone?: string;
   preference?: string;
 }) {
+  ensureBackupSchedulerStarted();
   const records = readCrmRecords();
   const idBase = slugify(input.name);
   const existingIds = new Set(getCustomers().map((customer) => customer.id));
@@ -390,7 +424,11 @@ export function addProject(input: {
   due?: string;
   nextAction?: string;
   nextFollow?: string;
+  templateTasks?: string;
+  timelineNote?: string;
+  initialMessage?: string;
 }) {
+  ensureBackupSchedulerStarted();
   const customer = getCustomerById(input.customerId);
 
   if (!customer) {
@@ -407,6 +445,25 @@ export function addProject(input: {
     id = `${idBase}-${index}`;
     index++;
   }
+
+  const templateTasks = input.templateTasks
+    ? input.templateTasks.split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
+    : [];
+  const defaultTasks = templateTasks.length > 0
+    ? templateTasks.map((title, index) => ({
+        title,
+        status: index === 0 ? '进行中' : '待开始',
+        owner: input.owner,
+        due: input.nextFollow || input.due || new Date().toISOString().slice(0, 10)
+      }))
+    : [
+        {
+          title: input.nextAction || '补充客户需求并建立下一步跟进计划',
+          status: '进行中',
+          owner: input.owner,
+          due: input.nextFollow || input.due || new Date().toISOString().slice(0, 10)
+        }
+      ];
 
   const project: Project = {
     id,
@@ -425,18 +482,11 @@ export function addProject(input: {
     nextAction: input.nextAction || '补充客户需求并建立下一步跟进计划',
     nextFollow: input.nextFollow || new Date().toISOString().slice(0, 10),
     portalVisible: true,
-    timeline: [`${new Date().toISOString().slice(0, 10)} 手动新建项目`],
-    tasks: [
-      {
-        title: input.nextAction || '补充客户需求并建立下一步跟进计划',
-        status: '进行中',
-        owner: input.owner,
-        due: input.nextFollow || input.due || new Date().toISOString().slice(0, 10)
-      }
-    ],
+    timeline: [`${new Date().toISOString().slice(0, 10)} ${input.timelineNote || '手动新建项目'}`],
+    tasks: defaultTasks,
     files: [],
     confirmations: [],
-    messages: []
+    messages: input.initialMessage ? [`客户：${input.initialMessage}`] : []
   };
 
   records.projects.push(project);
@@ -464,6 +514,203 @@ export function getProjectById(id: string) {
 
 export function getProjectsByCustomerId(customerId: string) {
   return getProjects().filter((project) => project.customerId === customerId);
+}
+
+function updateProject(projectId: string, updater: (project: Project) => Project) {
+  ensureBackupSchedulerStarted();
+  const normalizedId = normalizeRecordId(projectId);
+  const records = readCrmRecords();
+  const storedProjectIndex = records.projects.findIndex((project) => project.id === normalizedId);
+  const currentProject = getAllProjects({ includeClosed: true }).find((project) => project.id === normalizedId);
+
+  if (!currentProject) {
+    return undefined;
+  }
+
+  const nextProject = updater(currentProject);
+
+  if (storedProjectIndex >= 0) {
+    records.projects[storedProjectIndex] = nextProject;
+  } else {
+    records.projectUpdates = {
+      ...(records.projectUpdates || {}),
+      [normalizedId]: nextProject
+    };
+  }
+
+  writeCrmRecords(records);
+  return nextProject;
+}
+
+export function updateProjectStage(projectId: string, stage: string) {
+  const nextStage = stage.trim();
+
+  if (!nextStage) {
+    return undefined;
+  }
+
+  return updateProject(projectId, (project) => {
+    if (projectIsClosed(project)) {
+      return project;
+    }
+
+    return {
+      ...project,
+      stage: nextStage,
+      nextAction: `推进当前流程：${nextStage}`,
+      nextFollow: new Date().toISOString().slice(0, 10),
+      timeline: [...project.timeline, `${new Date().toISOString().slice(0, 10)} 流程推进到：${nextStage}`]
+    };
+  });
+}
+
+export function updateProjectTask(projectId: string, taskIndex: number, done: boolean) {
+  if (!Number.isInteger(taskIndex) || taskIndex < 0) {
+    return undefined;
+  }
+
+  return updateProject(projectId, (project) => {
+    if (projectIsClosed(project) || !project.tasks[taskIndex]) {
+      return project;
+    }
+
+    const task = project.tasks[taskIndex];
+    const nextStatus = done ? '已完成' : '进行中';
+    const tasks = project.tasks.map((item, index) => (index === taskIndex ? { ...item, status: nextStatus } : item));
+
+    return {
+      ...project,
+      tasks,
+      timeline: [...project.timeline, `${new Date().toISOString().slice(0, 10)} ${done ? '完成' : '重新打开'}任务：${task.title}`]
+    };
+  });
+}
+
+export function addProjectTask(projectId: string, input: { title: string; owner?: string; due?: string }) {
+  const title = input.title.trim();
+
+  if (!title) {
+    return undefined;
+  }
+
+  return updateProject(projectId, (project) => {
+    if (projectIsClosed(project)) {
+      return project;
+    }
+
+    const due = input.due?.trim() || project.nextFollow || project.due || new Date().toISOString().slice(0, 10);
+    const owner = input.owner?.trim() || project.owner;
+
+    return {
+      ...project,
+      tasks: [
+        ...project.tasks,
+        {
+          title,
+          status: '待开始',
+          owner,
+          due
+        }
+      ],
+      timeline: [...project.timeline, `${new Date().toISOString().slice(0, 10)} 新增任务：${title}`]
+    };
+  });
+}
+
+export function deleteProjectTask(projectId: string, taskIndex: number) {
+  if (!Number.isInteger(taskIndex) || taskIndex < 0) {
+    return undefined;
+  }
+
+  return updateProject(projectId, (project) => {
+    const task = project.tasks[taskIndex];
+
+    if (projectIsClosed(project) || !task) {
+      return project;
+    }
+
+    return {
+      ...project,
+      tasks: project.tasks.filter((_, index) => index !== taskIndex),
+      timeline: [...project.timeline, `${new Date().toISOString().slice(0, 10)} 删除任务：${task.title}`]
+    };
+  });
+}
+
+export function addProjectComment(projectId: string, message: string, authorLabel = '内部') {
+  const cleanMessage = message.trim();
+  const cleanAuthor = authorLabel.trim() || '内部';
+
+  if (!cleanMessage) {
+    return undefined;
+  }
+
+  return updateProject(projectId, (project) => {
+    if (projectIsClosed(project)) {
+      return project;
+    }
+
+    return {
+      ...project,
+      messages: [...project.messages, `${cleanAuthor}：${cleanMessage}`],
+      timeline: [...project.timeline, `${new Date().toISOString().slice(0, 10)} 新增COMMENTS：${cleanAuthor}`]
+    };
+  });
+}
+
+export function addProjectAttachment(projectId: string, fileName: string, storedName: string) {
+  const cleanFileName = fileName.trim();
+  const cleanStoredName = storedName.trim();
+
+  if (!cleanFileName || !cleanStoredName) {
+    return undefined;
+  }
+
+  return updateProject(projectId, (project) => {
+    if (projectIsClosed(project)) {
+      return project;
+    }
+
+    const files = project.files.includes(cleanFileName) ? project.files : [...project.files, cleanFileName];
+    const attachmentFiles = [
+      ...(project.attachmentFiles || []).filter((file) => file.storedName !== cleanStoredName),
+      {
+        name: cleanFileName,
+        storedName: cleanStoredName,
+        uploadedAt: new Date().toISOString()
+      }
+    ];
+
+    return {
+      ...project,
+      files,
+      attachmentFiles,
+      timeline: [...project.timeline, `${new Date().toISOString().slice(0, 10)} 上传附件：${cleanFileName}`]
+    };
+  });
+}
+
+export function getProjectAttachment(projectId: string, storedName: string) {
+  const project = getAllProjects({ includeClosed: true }).find((item) => item.id === normalizeRecordId(projectId));
+  const attachment = project?.attachmentFiles?.find((item) => item.storedName === storedName);
+
+  if (!project || !attachment) {
+    return undefined;
+  }
+
+  return { project, attachment };
+}
+
+export function closeProject(projectId: string) {
+  return updateProject(projectId, (project) => ({
+    ...project,
+    stage: '已结束',
+    risk: '绿灯',
+    nextAction: '项目已结束',
+    nextFollow: new Date().toISOString().slice(0, 10),
+    portalVisible: false,
+    timeline: [...project.timeline, `${new Date().toISOString().slice(0, 10)} 项目已结束`]
+  }));
 }
 
 export function getMailById(id: string) {

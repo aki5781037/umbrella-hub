@@ -1,17 +1,22 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { getCustomerIdForIdentity } from '@/lib/auth';
 import { getProjectWithPortalSubmissions } from '@/lib/portal-submissions';
 
 export const dynamic = 'force-dynamic';
 
 export default function PortalProjectDetailPage({ params }: { params: { id: string } }) {
+  const identity = cookies().get('umbrella_identity')?.value;
+  const customerId = getCustomerIdForIdentity(identity);
   const project = getProjectWithPortalSubmissions(params.id);
 
-  if (!project || !project.portalVisible) {
+  if (!project || !project.portalVisible || !customerId || project.customerId !== customerId) {
     notFound();
   }
 
   const pendingConfirmations = project.confirmations.filter((item) => item.status !== '已确认').length;
+  const attachmentByName = new Map((project.attachmentFiles || []).map((file) => [file.name, file]));
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-6 text-white sm:px-6 sm:py-8">
@@ -19,7 +24,7 @@ export default function PortalProjectDetailPage({ params }: { params: { id: stri
         <div className="rounded-3xl bg-white/10 p-6 shadow-panel ring-1 ring-white/15 sm:p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <Link href="/portal" className="text-sm font-semibold text-blue-200">Back to portal</Link>
+              <Link href="/portal" className="inline-flex min-h-8 items-center rounded-lg text-sm font-semibold text-blue-200">Back to portal</Link>
               <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{project.name}</h1>
               <p className="mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">{project.customer} · Current stage: {project.stage}</p>
             </div>
@@ -42,7 +47,7 @@ export default function PortalProjectDetailPage({ params }: { params: { id: stri
           <article className="rounded-2xl bg-white p-6 text-ink shadow-panel">
             <h2 className="text-xl font-bold">Items to Confirm</h2>
             <div className="mt-5 space-y-3">
-              {project.confirmations.map((item) => (
+              {project.confirmations.length > 0 ? project.confirmations.map((item) => (
                 <div key={item.title} className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -62,7 +67,7 @@ export default function PortalProjectDetailPage({ params }: { params: { id: stri
                     </div>
                   </form>
                 </div>
-              ))}
+              )) : <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">No confirmation items yet.</div>}
             </div>
           </article>
         </div>
@@ -71,27 +76,36 @@ export default function PortalProjectDetailPage({ params }: { params: { id: stri
           <article className="rounded-2xl bg-white p-6 text-ink shadow-panel">
             <h2 className="text-xl font-bold">Files</h2>
             <div className="mt-5 space-y-3">
-              {project.files.map((file) => (
+              {project.files.length > 0 ? project.files.map((file) => (
                 <div key={file} className="flex flex-col gap-2 rounded-xl bg-soft p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <span className="font-semibold">{file}</span>
-                  <span className="text-brand">Download</span>
+                  {attachmentByName.get(file) ? (
+                    <a
+                      href={`/api/projects/${encodeURIComponent(project.id)}/attachments/${encodeURIComponent(attachmentByName.get(file)!.storedName)}`}
+                      className="w-fit rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-brand"
+                    >
+                      Download
+                    </a>
+                  ) : (
+                    <span className="w-fit rounded-lg bg-white px-3 py-1 text-xs font-semibold text-muted">Record only</span>
+                  )}
                 </div>
-              ))}
+              )) : <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">No files uploaded yet.</div>}
             </div>
           </article>
 
           <article className="rounded-2xl bg-white p-6 text-ink shadow-panel">
-            <h2 className="text-xl font-bold">Messages</h2>
+            <h2 className="text-xl font-bold">COMMENTS</h2>
             <div className="mt-5 space-y-3">
-              {project.messages.map((message) => (
-                <div key={message} className="rounded-xl border border-line p-4 text-sm text-muted">{message}</div>
-              ))}
+              {project.messages.length > 0 ? project.messages.map((message, index) => (
+                <div key={`${message}-${index}`} className="rounded-xl border border-line p-4 text-sm text-muted">{message}</div>
+              )) : <div className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">No comments yet.</div>}
             </div>
             <form action="/api/portal/messages" method="post" className="mt-5 rounded-xl bg-soft p-4">
               <input type="hidden" name="projectId" value={project.id} />
-              <label className="text-sm font-semibold text-ink" htmlFor="portal-message">Leave a message</label>
-              <textarea id="portal-message" name="message" className="mt-3 min-h-28 w-full rounded-xl border border-line bg-white p-3 text-sm outline-none focus:border-brand" placeholder="Type your question or confirmation here..." required />
-              <button className="mt-3 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Submit Message</button>
+              <label className="text-sm font-semibold text-ink" htmlFor="portal-message">Add Comment</label>
+              <textarea id="portal-message" name="message" className="mt-3 min-h-28 w-full rounded-xl border border-line bg-white p-3 text-sm outline-none focus:border-brand" placeholder="Type your comment here..." required />
+              <button className="mt-3 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Submit Comment</button>
             </form>
           </article>
         </div>

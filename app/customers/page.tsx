@@ -29,7 +29,7 @@ export default function CustomersPage() {
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between gap-3"><dt className="text-muted">负责人</dt><dd className="font-medium">{customer.owner}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-muted">下次跟进</dt><dd className="font-medium">{customer.next}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-muted">可操作</dt><dd className="font-medium text-brand"><Link href={`/customers/${customer.id}`}>查看详情</Link></dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted">可操作</dt><dd className="font-medium text-brand"><Link href={`/customers/${customer.id}`} className="inline-flex min-h-8 items-center rounded-lg px-2">查看详情</Link></dd></div>
             </dl>
           </article>
         ))}
