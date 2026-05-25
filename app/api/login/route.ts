@@ -12,6 +12,10 @@ function cookieDomain(request: NextRequest) {
   return host.endsWith('arkumbrella.com') ? '.arkumbrella.com' : undefined;
 }
 
+function expireHostCookieHeader(name: string) {
+  return `${name}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; SameSite=Lax`;
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
@@ -33,8 +37,8 @@ export async function POST(request: NextRequest) {
     domain: cookieDomain(request)
   };
 
-  response.cookies.delete('umbrella_session');
-  response.cookies.delete('umbrella_identity');
+  response.headers.append('Set-Cookie', expireHostCookieHeader('umbrella_session'));
+  response.headers.append('Set-Cookie', expireHostCookieHeader('umbrella_identity'));
 
   response.cookies.set('umbrella_session', matchedAccount.role, cookieOptions);
   response.cookies.set('umbrella_identity', matchedAccount.email, cookieOptions);
