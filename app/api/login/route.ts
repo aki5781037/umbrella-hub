@@ -16,6 +16,10 @@ function expireHostCookieHeader(name: string) {
   return `${name}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; SameSite=Lax`;
 }
 
+function sharedCookieHeader(name: string, value: string) {
+  return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${60 * 60 * 8}; Domain=.arkumbrella.com; Secure; HttpOnly; SameSite=Lax`;
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
@@ -28,20 +32,30 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.redirect(appUrl(request, matchedAccount.role === 'customer' ? '/portal' : nextPath), 303);
-  const cookieOptions = {
-    httpOnly: true,
-    sameSite: 'lax' as const,
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 60 * 60 * 8,
-    domain: cookieDomain(request)
-  };
+  const sharedDomain = cookieDomain(request);
 
   response.headers.append('Set-Cookie', expireHostCookieHeader('umbrella_session'));
   response.headers.append('Set-Cookie', expireHostCookieHeader('umbrella_identity'));
 
-  response.cookies.set('umbrella_session', matchedAccount.role, cookieOptions);
-  response.cookies.set('umbrella_identity', matchedAccount.email, cookieOptions);
+  if (sharedDomain) {
+    response.headers.append('Set-Cookie', sharedCookieHeader('umbrella_session', matchedAccount.role));
+    response.headers.append('Set-Cookie', sharedCookieHeader('umbrella_identity', matchedAccount.email));
+  } else {
+    response.cookies.set('umbrella_session', matchedAccount.role, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 8
+    });
+    response.cookies.set('umbrella_identity', matchedAccount.email, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 8
+    });
+  }
 
   return response;
 }
