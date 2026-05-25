@@ -33,6 +33,9 @@ export async function POST(request: NextRequest) {
     domain: cookieDomain(request)
   };
 
+  response.cookies.delete('umbrella_session');
+  response.cookies.delete('umbrella_identity');
+
   response.cookies.set('umbrella_session', matchedAccount.role, cookieOptions);
   response.cookies.set('umbrella_identity', matchedAccount.email, cookieOptions);
 
