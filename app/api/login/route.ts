@@ -7,6 +7,11 @@ function appUrl(request: NextRequest, path: string) {
   return new URL(path, `${protocol}://${host}`);
 }
 
+function cookieDomain(request: NextRequest) {
+  const host = (request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? request.nextUrl.host).split(':')[0].toLowerCase();
+  return host.endsWith('arkumbrella.com') ? '.arkumbrella.com' : undefined;
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
@@ -24,7 +29,8 @@ export async function POST(request: NextRequest) {
     sameSite: 'lax' as const,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 60 * 60 * 8
+    maxAge: 60 * 60 * 8,
+    domain: cookieDomain(request)
   };
 
   response.cookies.set('umbrella_session', matchedAccount.role, cookieOptions);
