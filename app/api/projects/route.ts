@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
     priority: String(formData.get('priority') || '').trim(),
     due: String(formData.get('due') || '').trim(),
     nextAction: String(formData.get('nextAction') || '').trim(),
-    nextFollow: String(formData.get('nextFollow') || '').trim()
+    nextFollow: String(formData.get('nextFollow') || '').trim(),
+    templateTasks: String(formData.get('templateTasks') || '').trim()
   });
 
   if (!project) {

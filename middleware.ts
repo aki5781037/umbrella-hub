@@ -35,5 +35,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/customers/:path*', '/mail/:path*', '/umbrella-catalog/:path*', '/projects/:path*', '/tasks/:path*', '/portal/:path*', '/login', '/logout']
+  matcher: ['/', '/customers/:path*', '/mail/:path*', '/umbrella-catalog/:path*', '/projects/:path*', '/production/:path*', '/tasks/:path*', '/settings/:path*', '/portal/:path*', '/login', '/logout']
 };

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCustomerIdForIdentity } from '@/lib/auth';
+import { getProjectById } from '@/lib/data';
 import { addConfirmationSubmission } from '@/lib/portal-submissions';
 
 function portalProjectUrl(request: NextRequest, projectId: string) {
@@ -9,8 +11,10 @@ function portalProjectUrl(request: NextRequest, projectId: string) {
 
 export async function POST(request: NextRequest) {
   const session = request.cookies.get('umbrella_session')?.value;
+  const identity = request.cookies.get('umbrella_identity')?.value;
+  const customerId = getCustomerIdForIdentity(identity);
 
-  if (session !== 'customer') {
+  if (session !== 'customer' || !customerId) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
@@ -22,6 +26,11 @@ export async function POST(request: NextRequest) {
 
   if (!projectId || !title || !['confirm', 'question'].includes(action)) {
     return NextResponse.json({ error: 'Invalid confirmation submission.' }, { status: 400 });
+  }
+
+  const project = getProjectById(projectId);
+  if (!project || !project.portalVisible || project.customerId !== customerId) {
+    return NextResponse.json({ error: 'Project not found.' }, { status: 404 });
   }
 
   addConfirmationSubmission(projectId, title, action === 'confirm' ? '已确认' : '有疑问', message);

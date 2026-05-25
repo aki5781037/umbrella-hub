@@ -6,7 +6,9 @@ const navItems = [
   { href: '/umbrella-catalog', label: '伞款图库' },
   { href: '/customers', label: '客户管理' },
   { href: '/projects', label: '项目管理' },
+  { href: '/production', label: '生产管理' },
   { href: '/tasks', label: '任务提醒' },
+  { href: '/settings', label: '系统设置' },
   { href: '/portal', label: '客户门户' }
 ];
 
@@ -35,6 +37,7 @@ export function Shell({ children, active }: { children: React.ReactNode; active:
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">MVP 运行中</div>
+              <Link href="/settings" className="rounded-full border border-line px-4 py-2 text-sm font-medium text-muted hover:bg-soft hover:text-ink">设置</Link>
               <a href="/logout" className="rounded-full border border-line px-4 py-2 text-sm font-medium text-muted hover:bg-soft hover:text-ink">退出</a>
             </div>
           </div>

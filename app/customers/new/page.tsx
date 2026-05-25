@@ -6,7 +6,7 @@ export default function NewCustomerPage() {
     <Shell active="客户管理">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Link href="/customers" className="text-sm font-medium text-brand">返回客户列表</Link>
+          <Link href="/customers" className="inline-flex min-h-8 items-center rounded-lg text-sm font-medium text-brand">返回客户列表</Link>
           <h3 className="mt-2 text-2xl font-bold text-ink">新建客户</h3>
           <p className="mt-1 text-sm text-muted">录入客户基础信息、主要联系人和下次跟进时间。</p>
         </div>
