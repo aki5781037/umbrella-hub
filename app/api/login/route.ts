@@ -12,14 +12,6 @@ function cookieDomain(request: NextRequest) {
   return host.endsWith('arkumbrella.com') ? '.arkumbrella.com' : undefined;
 }
 
-function expireHostCookieHeader(name: string) {
-  return `${name}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly; SameSite=Lax`;
-}
-
-function sharedCookieHeader(name: string, value: string) {
-  return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${60 * 60 * 8}; Domain=.arkumbrella.com; Secure; HttpOnly; SameSite=Lax`;
-}
-
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
@@ -34,28 +26,29 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.redirect(appUrl(request, matchedAccount.role === 'customer' ? '/portal' : nextPath), 303);
   const sharedDomain = cookieDomain(request);
 
-  response.headers.append('Set-Cookie', expireHostCookieHeader('umbrella_session'));
-  response.headers.append('Set-Cookie', expireHostCookieHeader('umbrella_identity'));
-
+  // 1. 显式清除有可能残留在共享域名 (.arkumbrella.com) 下的老旧 Cookie，防止干扰
   if (sharedDomain) {
-    response.headers.append('Set-Cookie', sharedCookieHeader('umbrella_session', matchedAccount.role));
-    response.headers.append('Set-Cookie', sharedCookieHeader('umbrella_identity', matchedAccount.email));
-  } else {
-    response.cookies.set('umbrella_session', matchedAccount.role, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 8
-    });
-    response.cookies.set('umbrella_identity', matchedAccount.email, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 8
-    });
+    response.headers.append('Set-Cookie', `umbrella_session=; Path=/; Max-Age=0; Domain=${sharedDomain}; Secure; HttpOnly; SameSite=Lax`);
+    response.headers.append('Set-Cookie', `umbrella_identity=; Path=/; Max-Age=0; Domain=${sharedDomain}; Secure; HttpOnly; SameSite=Lax`);
   }
+
+  // 2. 统一使用极其稳定、没有任何多域冲突问题的 Host-only Cookie
+  const secureFlag = process.env.NODE_ENV === 'production' || request.nextUrl.protocol === 'https:';
+
+  response.cookies.set('umbrella_session', matchedAccount.role, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: secureFlag,
+    path: '/',
+    maxAge: 60 * 60 * 8
+  });
+  response.cookies.set('umbrella_identity', matchedAccount.email, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: secureFlag,
+    path: '/',
+    maxAge: 60 * 60 * 8
+  });
 
   return response;
 }
